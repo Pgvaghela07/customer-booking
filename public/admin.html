@@ -1,0 +1,192 @@
+<!-- public/admin.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Taxi Booking</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Admin Dashboard - Taxi Bookings</h2>
+
+        <!-- Table to Display Taxi Booking Data -->
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Booking ID</th>
+                    <th>Customer Name</th>
+                    <th>Pickup Location</th>
+                    <th>Drop Location</th>
+                    <th>Pickup Date</th>
+                    <th>Pickup Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="bookingTableBody">
+                <!-- Rows will be dynamically inserted here using JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal for Editing Booking -->
+    <div class="modal fade" id="editBookingModal" tabindex="-1" aria-labelledby="editBookingModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editBookingModalLabel">Edit Booking</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editBookingForm">
+                        <div class="mb-3">
+                            <label for="editCustomerName" class="form-label">Customer Name</label>
+                            <input type="text" class="form-control" id="editCustomerName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPickupLocation" class="form-label">Pickup Location</label>
+                            <input type="text" class="form-control" id="editPickupLocation" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDropLocation" class="form-label">Drop Location</label>
+                            <input type="text" class="form-control" id="editDropLocation" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPickupDate" class="form-label">Pickup Date</label>
+                            <input type="date" class="form-control" id="editPickupDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPickupTime" class="form-label">Pickup Time</label>
+                            <input type="time" class="form-control" id="editPickupTime" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let bookings = [];
+
+        // Fetch bookings from the server
+        async function fetchBookings() {
+            try {
+                const response = await fetch('/api/bookings');
+                if (!response.ok) throw new Error('Failed to fetch bookings');
+                bookings = await response.json();
+                renderBookings();
+            } catch (error) {
+                console.error(error);
+                alert('Error fetching bookings.');
+            }
+        }
+
+        // Render bookings in the table
+        function renderBookings() {
+            const tbody = document.getElementById("bookingTableBody");
+            tbody.innerHTML = ''; // Clear the table body
+            bookings.forEach((booking, index) => {
+                const row = `<tr>
+                    <td>${booking.id}</td>
+                    <td>${booking.customerName}</td>
+                    <td>${booking.pickupLocation}</td>
+                    <td>${booking.dropLocation}</td>
+                    <td>${booking.pickupDate}</td>
+                    <td>${booking.pickupTime}</td>
+                    <td>${booking.status}</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm" onclick="editBooking(${index})">Edit</button>
+                        <button class="btn btn-success btn-sm" onclick="confirmBooking(${index})">Confirm</button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteBooking(${index})">Delete</button>
+                    </td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // Edit Booking
+        function editBooking(index) {
+            const booking = bookings[index];
+            document.getElementById('editCustomerName').value = booking.customerName;
+            document.getElementById('editPickupLocation').value = booking.pickupLocation;
+            document.getElementById('editDropLocation').value = booking.dropLocation;
+            document.getElementById('editPickupDate').value = booking.pickupDate;
+            document.getElementById('editPickupTime').value = booking.pickupTime;
+
+            const modal = new bootstrap.Modal(document.getElementById('editBookingModal'));
+            modal.show();
+
+            const form = document.getElementById('editBookingForm');
+            form.onsubmit = async function(event) {
+                event.preventDefault();
+                const updatedBooking = {
+                    customerName: document.getElementById('editCustomerName').value,
+                    pickupLocation: document.getElementById('editPickupLocation').value,
+                    dropLocation: document.getElementById('editDropLocation').value,
+                    pickupDate: document.getElementById('editPickupDate').value,
+                    pickupTime: document.getElementById('editPickupTime').value
+                };
+
+                try {
+                    const response = await fetch(`/api/bookings/${booking.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(updatedBooking)
+                    });
+                    if (!response.ok) throw new Error('Failed to update booking');
+                    const result = await response.json();
+                    console.log(result.message);
+                    fetchBookings(); // Refresh bookings
+                    modal.hide();
+                } catch (error) {
+                    console.error(error);
+                    alert('Error updating booking.');
+                }
+            };
+        }
+
+        // Confirm Booking
+        async function confirmBooking(index) {
+            const booking = bookings[index];
+            try {
+                const response = await fetch(`/api/bookings/${booking.id}/confirm`, {
+                    method: 'PUT'
+                });
+                if (!response.ok) throw new Error('Failed to confirm booking');
+                const result = await response.json();
+                console.log(result.message);
+                fetchBookings(); // Refresh bookings
+            } catch (error) {
+                console.error(error);
+                alert('Error confirming booking.');
+            }
+        }
+
+        // Delete Booking
+        async function deleteBooking(index) {
+            const booking = bookings[index];
+            if (!confirm(`Are you sure you want to delete booking ID ${booking.id}?`)) return;
+
+            try {
+                const response = await fetch(`/api/bookings/${booking.id}`, {
+                    method: 'DELETE'
+                });
+                if (!response.ok) throw new Error('Failed to delete booking');
+                const result = await response.json();
+                console.log(result.message);
+                fetchBookings(); // Refresh bookings
+            } catch (error) {
+                console.error(error);
+                alert('Error deleting booking.');
+            }
+        }
+
+        // Load bookings on page load
+        window.onload = fetchBookings;
+    </script>
+</body>
+</html>
