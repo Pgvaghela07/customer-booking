@@ -32,7 +32,7 @@ db.connect(err => {
 });
 
 // API to get all bookings
-app.get('customer-booking-wojh.onrender.com/api/bookings', (req, res) => {
+app.get('https://customer-booking-wojh.onrender.com/api/bookings', (req, res) => {
     const query = 'SELECT * FROM bookings';
     db.query(query, (err, results) => {
         if (err) {
@@ -43,7 +43,7 @@ app.get('customer-booking-wojh.onrender.com/api/bookings', (req, res) => {
 });
 
 // API to create a new booking
-app.post('customer-booking-wojh.onrender.com/api/bookings', (req, res) => {
+app.post('https://customer-booking-wojh.onrender.com/api/bookings', (req, res) => {
     const { customerName, pickupLocation, dropLocation, pickupDate, pickupTime } = req.body;
 
     if (!customerName || !pickupLocation || !dropLocation || !pickupDate || !pickupTime) {
@@ -64,7 +64,7 @@ app.post('customer-booking-wojh.onrender.com/api/bookings', (req, res) => {
 });
 
 // API to edit a booking
-app.put('customer-booking-wojh.onrender.com/api/bookings/:id', (req, res) => {
+app.put('https://customer-booking-wojh.onrender.com/api/bookings/:id', (req, res) => {
     const bookingId = req.params.id;
     const { customerName, pickupLocation, dropLocation, pickupDate, pickupTime } = req.body;
 
@@ -82,7 +82,7 @@ app.put('customer-booking-wojh.onrender.com/api/bookings/:id', (req, res) => {
 });
 
 // API to confirm a booking
-app.put('customer-booking-wojh.onrender.com/api/bookings/:id/confirm', (req, res) => {
+app.put('https://customer-booking-wojh.onrender.com/api/bookings/:id/confirm', (req, res) => {
     const bookingId = req.params.id;
     const query = `UPDATE bookings SET status = 'Confirmed' WHERE id = ?`;
 
@@ -95,7 +95,7 @@ app.put('customer-booking-wojh.onrender.com/api/bookings/:id/confirm', (req, res
 });
 
 // API to delete a booking
-app.delete('customer-booking-wojh.onrender.com/api/bookings/:id', (req, res) => {
+app.delete('https://customer-booking-wojh.onrender.com/api/bookings/:id', (req, res) => {
     const bookingId = req.params.id;
     const query = `DELETE FROM bookings WHERE id = ?`;
 
